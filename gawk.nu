@@ -1,26 +1,4 @@
-export def "nk wc" [
-    file: string = '-', # file path
-    --line (-l), # line count
-    --separator (-s): string = "\"\t\"", # separator
-] {
-    ^gawk -F $separator -v $"l=(if ($line) {1} else {0})" '
-        {
-            if (l == 0) {
-                count += NF
-            }
-        }
-        
-        END {
-            print(l)
-            if (l == 1) {
-                print NR
-            } else {
-                print count
-            }
-        }
-    ' $file
-}
-
+# Count uniq value of specific field(s)
 export def "nk uniq" [
     file: string = '-', # file path
     --index (-i): string = "0", # index of column to count
@@ -37,38 +15,57 @@ export def "nk uniq" [
     ' $file
 }
 
+# Get top frequency of specific field(s)
 export def "nk top" [
     file: string = '-', # file path
     --count (-c): int = 5, # number of top items to show
     --limit (-l): int = 1000000, # number of lines to read
     --separator (-s): string = "\"\t\"", # separator
+    --header (-h) # whether the file has header
 ] {
-    ^gawk -F $separator -v $'l=($limit)' -v $'c=($count)' '
+    if $header {
+        let header = 1
+    } else {
+        let header = 0
+    }
+    ^gawk -F $separator -v $'l=($limit)' -v $'c=($count)' -v $'h=($header)' '
         NR == 1 {
             num_field = NF
+            if (h == 1) {
+                for (i = 1; i <= num_field; i++) {
+                    header[i] = $i
+                }
+            }
         }
     
         NR <= l {
+            if (NR == 1 && h == 1) {
+                next
+            }
+
             for (i = 1; i <= num_field; i++) {
                 seen[i][$i]++
             }
         }
         
         END {
-            print "{"
             for (s in seen) {
-                print "\"" s "\" : {"
+                if (h == 1) {
+                    field = header[s]
+                } else {
+                    field = s
+                }
+                print field ":"
 
                 n = asorti(seen[s], sorted, "@val_num_desc")
                 
                 for (i = 1; i <= n && i <= c; i++) {
-                    print "\t" "\""sorted[i]"\" : " seen[s][sorted[i]]
+                    field = sorted[i]
+                    print "  " "\"" field "\"" ": " seen[s][sorted[i]]
                 }
-                print "\t}"
             }
-            print "}"
         }
-    ' $file | from json
+    ' $file | from yaml 
 }
 
 export def "nk vuniq" [
