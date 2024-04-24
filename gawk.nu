@@ -26,7 +26,7 @@ export def "nk top" [
     ^gawk -F $separator -v $'l=($limit)' -v $'c=($count)' -v $'h=($header)' '
         NR == 1 {
             num_field = NF
-            if (h == "false") {
+            if (h == "true") {
                 for (i = 1; i <= num_field; i++) {
                     header[i] = $i
                 }
@@ -34,7 +34,7 @@ export def "nk top" [
         }
     
         NR <= l {
-            if (NR == 1 && h == "false") {
+            if (NR == 1 && h == "true") {
                 next
             }
 
@@ -45,7 +45,7 @@ export def "nk top" [
         
         END {
             for (s in seen) {
-                if (h == "false") {
+                if (h == "true") {
                     field = header[s]
                 } else {
                     field = s
