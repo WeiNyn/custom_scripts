@@ -22,16 +22,11 @@ export def "nk top" [
     --limit (-l): int = 1000000, # number of lines to read
     --separator (-s): string = "\"\t\"", # separator
     --header (-h) # whether the file has header
-] {
-    if $header {
-        let header = 1
-    } else {
-        let header = 0
-    }
+] { 
     ^gawk -F $separator -v $'l=($limit)' -v $'c=($count)' -v $'h=($header)' '
         NR == 1 {
             num_field = NF
-            if (h == 1) {
+            if (h == "false") {
                 for (i = 1; i <= num_field; i++) {
                     header[i] = $i
                 }
@@ -39,7 +34,7 @@ export def "nk top" [
         }
     
         NR <= l {
-            if (NR == 1 && h == 1) {
+            if (NR == 1 && h == "false") {
                 next
             }
 
@@ -50,7 +45,7 @@ export def "nk top" [
         
         END {
             for (s in seen) {
-                if (h == 1) {
+                if (h == "false") {
                     field = header[s]
                 } else {
                     field = s
@@ -65,7 +60,7 @@ export def "nk top" [
                 }
             }
         }
-    ' $file | from yaml 
+    ' $file | from yaml
 }
 
 export def "nk vuniq" [
