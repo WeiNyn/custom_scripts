@@ -80,9 +80,10 @@ export def "nk clus" [
     --uid (-u): string = "0", # index of src_uid columns (or name if --header is true)
     --pattern (-p): string, # indices of pattern to make cluster (or names if --header is true)
     --separator (-s): string = "\"\t\"", # separator of input file 
+    --limit (-l): int = 3, # minimum number of items in cluster to show
     --header # input file contains header
 ] {
-    ^gawk -F $separator -v $'uid=($uid)' -v $'pt=($pattern)' -v $'h=($header)' '
+    ^gawk -F $separator -v $'uid=($uid)' -v $'pt=($pattern)' -v $'h=($header)' -v $'lim=($limit)' '
     NR == 1 {
         split(pt, cluster_col_indices, ",")
 
@@ -142,6 +143,9 @@ export def "nk clus" [
         sids[""] = 1
         for (i = 1; i <= n; i++) {
             cluster = sorted_clusters[i]
+            if (cluster_count[cluster] < lim) {
+                continue
+            }
             print "# " cluster " (" cluster_count[cluster] "):"
             for (sid in cluses[cluster]) {
                 # if sid not in sids
